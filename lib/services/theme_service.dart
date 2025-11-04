@@ -21,6 +21,7 @@ class ThemeService extends ChangeNotifier {
     notifyListeners();
   }
 
+  // ======== LIGHT THEME ========
   static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
@@ -46,6 +47,7 @@ class ThemeService extends ChangeNotifier {
     );
   }
 
+  // ======== DARK THEME ========
   static ThemeData get darkTheme {
     return ThemeData(
       useMaterial3: true,
@@ -70,4 +72,49 @@ class ThemeService extends ChangeNotifier {
       ),
     );
   }
+}
+
+// ===========================================================
+// 🔹 DashboardTheme Extension
+// Estilos visuales del Dashboard (colores, gradientes y tipografía)
+// ===========================================================
+extension DashboardTheme on ThemeData {
+  /// Fondo principal del dashboard
+  Color get dashboardBackground =>
+      brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.white;
+
+  /// Gradiente principal (tarjetas, encabezados)
+  LinearGradient get primaryGradient => const LinearGradient(
+        colors: [Color(0xFF4facfe), Color(0xFF00f2fe)],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      );
+
+  /// Gradiente secundario (gráficas o indicadores)
+  LinearGradient get secondaryGradient => const LinearGradient(
+        colors: [Color(0xFFFF9966), Color(0xFFFF5E62)],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      );
+
+  /// Colores de acento para los íconos del dashboard
+  Color get successColor => const Color(0xFF4CAF50);
+  Color get warningColor => const Color(0xFFFFC107);
+  Color get dangerColor => const Color(0xFFF44336);
+
+  /// Tipografía del dashboard
+  TextStyle get dashboardTitle => const TextStyle(
+        fontSize: 20,
+        fontWeight: FontWeight.bold,
+      );
+
+  TextStyle get dashboardValue => const TextStyle(
+        fontSize: 28,
+        fontWeight: FontWeight.bold,
+      );
+
+  TextStyle get dashboardLabel => const TextStyle(
+        fontSize: 12,
+        color: Colors.grey,
+      );
 }

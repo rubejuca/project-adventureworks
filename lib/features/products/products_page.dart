@@ -319,6 +319,14 @@ class _ProductsPageState extends State<ProductsPage> {
           ],
         ),
         actions: [
+          // Dashboard Button
+          IconButton(
+            icon: const Icon(Icons.dashboard),
+            onPressed: () {
+              Navigator.of(context).pushNamed('/dashboard');
+            },
+            tooltip: 'Dashboard',
+          ),
           // Add Product Button
           IconButton(
             icon: const Icon(Icons.add),

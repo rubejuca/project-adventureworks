@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:adventure_works/features/auth/login_page.dart';
 import 'package:adventure_works/features/products/products_page.dart';
 import 'package:adventure_works/features/products/pages/create_product_page.dart'; // Add this import
+import 'package:adventure_works/features/dashboard/dashboard_page.dart'; // Add this import
 import 'package:adventure_works/services/theme_service.dart';
 
 class MyApp extends StatefulWidget {
@@ -44,6 +45,7 @@ class _MyAppState extends State<MyApp> {
         ProductsPage.route: (context) => const ProductsPage(),
         CreateProductPage.route:
             (context) => const CreateProductPage(), // Add this route
+        '/dashboard': (context) => const DashboardPage(),
       },
     );
   }
