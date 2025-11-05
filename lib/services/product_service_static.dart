@@ -1,126 +1,76 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_core/firebase_core.dart';
+import 'dart:async';
 import '../models/product.dart';
 import 'product_service_interface.dart';
 
-class ProductServiceFirebase implements ProductServiceInterface {
-  final CollectionReference _productsCollection;
-
-  ProductServiceFirebase()
-    : _productsCollection = FirebaseFirestore.instance.collection('products');
-
-  /// Get all products as a stream (real-time updates)
+class ProductServiceStatic implements ProductServiceInterface {
+  /// Get all products from static data
   @override
   Stream<List<Product>> getProductsStream() {
-    try {
-      return _productsCollection.snapshots().map((snapshot) {
-        return snapshot.docs.map((doc) {
-          final data = doc.data() as Map<String, dynamic>?;
-          if (data == null)
-            return Product.fromJson({}); // Return empty product if data is null
-          return Product.fromJson(data);
-        }).toList();
-      });
-    } catch (e) {
-      // Return an empty stream if there's an error
-      return Stream.value(<Product>[]);
-    }
+    // For static data, we'll return a single emission
+    return Stream.value(_getInitialProducts());
   }
 
   /// Get all products as a future (one-time fetch)
   @override
   Future<List<Product>> getProducts() async {
     try {
-      final snapshot = await _productsCollection.get();
-      return snapshot.docs.map((doc) {
-        final data = doc.data() as Map<String, dynamic>?;
-        if (data == null)
-          return Product.fromJson({}); // Return empty product if data is null
-        return Product.fromJson(data);
-      }).toList();
+      return _getInitialProducts();
     } catch (e) {
       // Return an empty list if there's an error
+      print('Error getting static products: $e');
       return <Product>[];
     }
   }
 
-  /// Add a new product to Firestore
+  /// Add a new product (not supported in static mode)
   @override
   Future<void> addProduct(Product product) async {
-    try {
-      await _productsCollection.doc(product.id).set(product.toJson());
-    } catch (e) {
-      // Rethrow the error to be handled by the calling code
-      rethrow;
-    }
+    // Static service doesn't support adding products
+    throw UnimplementedError('Static service does not support adding products');
   }
 
-  /// Update an existing product in Firestore
+  /// Update an existing product (not supported in static mode)
   @override
   Future<void> updateProduct(Product product) async {
-    try {
-      await _productsCollection.doc(product.id).update(product.toJson());
-    } catch (e) {
-      // Rethrow the error to be handled by the calling code
-      rethrow;
-    }
+    // Static service doesn't support updating products
+    throw UnimplementedError('Static service does not support updating products');
   }
 
-  /// Delete a product from Firestore
+  /// Delete a product (not supported in static mode)
   @override
   Future<void> deleteProduct(String productId) async {
-    try {
-      await _productsCollection.doc(productId).delete();
-    } catch (e) {
-      // Rethrow the error to be handled by the calling code
-      rethrow;
-    }
+    // Static service doesn't support deleting products
+    throw UnimplementedError('Static service does not support deleting products');
   }
 
   /// Get a single product by ID
   @override
   Future<Product?> getProductById(String id) async {
     try {
-      final doc = await _productsCollection.doc(id).get();
-      if (doc.exists) {
-        final data = doc.data() as Map<String, dynamic>?;
-        if (data == null) return null;
-        return Product.fromJson(data);
-      }
-      return null;
+      final products = _getInitialProducts();
+      return products.firstWhere(
+        (product) => product.id == id,
+        orElse: () => Product(
+          id: '',
+          name: 'Producto no encontrado',
+          productNumber: '',
+          listPrice: 0.0,
+        ),
+      );
     } catch (e) {
       // Return null if there's an error
+      print('Error getting product by ID: $e');
       return null;
     }
   }
 
-  /// Seed Firestore with initial products if collection is empty
+  /// Seed initial products (not needed for static service)
   @override
   Future<void> seedInitialProducts() async {
-    try {
-      final snapshot = await _productsCollection.limit(1).get();
-
-      // If collection is empty, seed with initial products
-      if (snapshot.docs.isEmpty) {
-        final initialProducts = _getInitialProducts();
-
-        // Add all products to Firestore
-        for (final product in initialProducts) {
-          await addProduct(product);
-        }
-      }
-    } on FirebaseException catch (e) {
-      // Handle Firebase specific errors
-      print('Firebase error during seeding: ${e.message}');
-      print('Error code: ${e.code}');
-    } catch (e) {
-      // Silently ignore errors during seeding
-      // This is not critical for the app to function
-      print('Error during product seeding: $e');
-    }
+    // Not needed for static service
   }
 
-  /// Get initial products list (converted from static data)
+  /// Get initial products list
   List<Product> _getInitialProducts() {
     return [
       // Bike Frames
@@ -217,7 +167,7 @@ class ProductServiceFirebase implements ProductServiceInterface {
       Product.fromStaticData(
         id: 728,
         name: 'Bike Wash - Dissolver',
-        productNumber: 'CL-9009',
+        productNumber: 'CL-909',
         listPrice: 7.95,
         color: null,
       ),

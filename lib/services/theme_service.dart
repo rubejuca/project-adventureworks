@@ -37,7 +37,7 @@ class ThemeService extends ChangeNotifier {
         ),
       ),
       appBarTheme: const AppBarTheme(centerTitle: true, elevation: 0),
-      cardTheme: const CardTheme(
+      cardTheme: const CardThemeData(
         elevation: 0.5,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(18)),
@@ -63,7 +63,7 @@ class ThemeService extends ChangeNotifier {
         ),
       ),
       appBarTheme: const AppBarTheme(centerTitle: true, elevation: 0),
-      cardTheme: const CardTheme(
+      cardTheme: const CardThemeData(
         elevation: 0.5,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(18)),

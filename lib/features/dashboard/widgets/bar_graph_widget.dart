@@ -1,6 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import '../dashboard_controller.dart';
+import 'dashboard_theme.dart';
 
 class BarGraphWidget extends StatefulWidget {
   final List<CategoryPriceData> categoryPriceData;
@@ -19,17 +20,9 @@ class _BarGraphWidgetState extends State<BarGraphWidget> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Theme.of(context).cardTheme.color ?? Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Theme.of(context).brightness == Brightness.dark 
-                ? Colors.black.withValues(alpha: 0.3) 
-                : Colors.grey.withValues(alpha: 0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        color: DashboardTheme.cardBackgroundColor,
+        borderRadius: DashboardTheme.cardBorderRadius,
+        boxShadow: DashboardTheme.cardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -37,12 +30,9 @@ class _BarGraphWidgetState extends State<BarGraphWidget> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                "Comparativo de precios promedio",
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
+              Text(
+                "Comparativo de Precios Promedio",
+                style: DashboardTheme.headingSmall,
               ),
               if (_selectedBarIndex != null && 
                   _selectedBarIndex! < widget.categoryPriceData.length)
@@ -50,7 +40,7 @@ class _BarGraphWidgetState extends State<BarGraphWidget> {
                   widget.categoryPriceData[_selectedBarIndex!].category ?? '',
                   style: TextStyle(
                     fontSize: 14,
-                    color: Theme.of(context).colorScheme.primary,
+                    color: DashboardTheme.primaryBlue,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -58,7 +48,7 @@ class _BarGraphWidgetState extends State<BarGraphWidget> {
           ),
           const SizedBox(height: 12),
           SizedBox(
-            height: 200,
+            height: 250,
             child: BarChart(
               BarChartData(
                 barGroups: widget.categoryPriceData
@@ -70,8 +60,8 @@ class _BarGraphWidgetState extends State<BarGraphWidget> {
                             BarChartRodData(
                               toY: e.value.averagePrice,
                               color: _selectedBarIndex == e.key 
-                                  ? Theme.of(context).colorScheme.primary 
-                                  : Theme.of(context).colorScheme.primary.withValues(alpha: 0.7),
+                                  ? DashboardTheme.accentOrange 
+                                  : DashboardTheme.primaryBlue,
                               width: 18,
                               borderRadius: BorderRadius.circular(6),
                             ),
@@ -83,9 +73,7 @@ class _BarGraphWidgetState extends State<BarGraphWidget> {
                   drawHorizontalLine: true,
                   getDrawingHorizontalLine: (value) {
                     return FlLine(
-                      color: Theme.of(context).brightness == Brightness.dark 
-                          ? Colors.white.withValues(alpha: 0.1) 
-                          : Colors.black.withValues(alpha: 0.05),
+                      color: DashboardTheme.textTertiary.withValues(alpha: 0.1),
                       strokeWidth: 1,
                     );
                   },
@@ -105,13 +93,11 @@ class _BarGraphWidgetState extends State<BarGraphWidget> {
                           final truncated = category.length > 10
                               ? '${category.substring(0, 10)}...'
                               : category;
-                          return Text(
-                            truncated,
-                            style: TextStyle(
-                              color: Theme.of(context).brightness == Brightness.dark 
-                                  ? Colors.white 
-                                  : Colors.black,
-                              fontSize: 10,
+                          return SideTitleWidget(
+                            axisSide: meta.axisSide,
+                            child: Text(
+                              truncated,
+                              style: DashboardTheme.bodySmall,
                             ),
                           );
                         }
@@ -126,12 +112,7 @@ class _BarGraphWidgetState extends State<BarGraphWidget> {
                       getTitlesWidget: (value, meta) {
                         return Text(
                           '\$${value.toInt()}',
-                          style: TextStyle(
-                            color: Theme.of(context).brightness == Brightness.dark 
-                                ? Colors.white 
-                                : Colors.black,
-                            fontSize: 10,
-                          ),
+                          style: DashboardTheme.bodySmall,
                         );
                       },
                       reservedSize: 40,
@@ -156,14 +137,14 @@ class _BarGraphWidgetState extends State<BarGraphWidget> {
                       return BarTooltipItem(
                         '$category\n',
                         const TextStyle(
-                          color: Colors.white,
+                          color: Colors.black,
                           fontWeight: FontWeight.bold,
                         ),
                         children: [
                           TextSpan(
                             text: '\$${rod.toY.toStringAsFixed(2)}',
                             style: const TextStyle(
-                              color: Colors.white,
+                              color: Colors.black,
                               fontWeight: FontWeight.normal,
                             ),
                           ),
@@ -172,6 +153,7 @@ class _BarGraphWidgetState extends State<BarGraphWidget> {
                     },
                   ),
                 ),
+
               ),
             ),
           ),
@@ -183,12 +165,10 @@ class _BarGraphWidgetState extends State<BarGraphWidget> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   _buildDetailItem(
-                    context, 
                     'Categoría', 
                     widget.categoryPriceData[_selectedBarIndex!].category ?? ''
                   ),
                   _buildDetailItem(
-                    context, 
                     'Precio Promedio', 
                     '\$${widget.categoryPriceData[_selectedBarIndex!].averagePrice.toStringAsFixed(2)}'
                   ),
@@ -200,24 +180,18 @@ class _BarGraphWidgetState extends State<BarGraphWidget> {
     );
   }
 
-  Widget _buildDetailItem(BuildContext context, String label, String value) {
+  Widget _buildDetailItem(String label, String value) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
-          style: TextStyle(
-            fontSize: 12,
-            color: Theme.of(context).brightness == Brightness.dark 
-                ? Colors.white70 
-                : Colors.black54,
-          ),
+          style: DashboardTheme.labelMedium,
         ),
         Text(
           value,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
+          style: DashboardTheme.bodyLarge.copyWith(
+            fontWeight: FontWeight.bold,
           ),
         ),
       ],

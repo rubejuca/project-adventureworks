@@ -1,6 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import '../dashboard_controller.dart';
+import 'dashboard_theme.dart';
 
 class HorizontalBarChart extends StatefulWidget {
   final List<CategoryCountData> categoryCountData;
@@ -19,57 +20,45 @@ class _HorizontalBarChartState extends State<HorizontalBarChart> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Theme.of(context).cardTheme.color ?? Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Theme.of(context).brightness == Brightness.dark 
-                ? Colors.black.withValues(alpha: 0.3) 
-                : Colors.grey.withValues(alpha: 0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        color: DashboardTheme.cardBackgroundColor,
+        borderRadius: DashboardTheme.cardBorderRadius,
+        boxShadow: DashboardTheme.cardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                "Cantidad de productos por categoría",
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              if (_selectedBarIndex != null && 
-                  _selectedBarIndex! < widget.categoryCountData.length)
-                Text(
-                  widget.categoryCountData[_selectedBarIndex!].category ?? '',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Theme.of(context).colorScheme.primary,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-            ],
+          Text(
+            "Productos por Categoría",
+            style: DashboardTheme.headingSmall,
           ),
           const SizedBox(height: 12),
           SizedBox(
-            height: 200,
+            height: 300,
             child: BarChart(
               BarChartData(
-                barGroups: _chartGroups(),
+                barGroups: widget.categoryCountData
+                    .asMap()
+                    .entries
+                    .map((e) => BarChartGroupData(
+                          x: e.key,
+                          barRods: [
+                            BarChartRodData(
+                              toY: e.value.count.toDouble(),
+                              color: _selectedBarIndex == e.key 
+                                  ? DashboardTheme.accentOrange 
+                                  : DashboardTheme.primaryGreen,
+                              width: 22,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                          ],
+                        ))
+                    .toList(),
                 gridData: FlGridData(
                   show: true,
                   drawVerticalLine: true,
                   getDrawingVerticalLine: (value) {
                     return FlLine(
-                      color: Theme.of(context).brightness == Brightness.dark 
-                          ? Colors.white.withValues(alpha: 0.1) 
-                          : Colors.black.withValues(alpha: 0.05),
+                      color: DashboardTheme.textTertiary.withValues(alpha: 0.1),
                       strokeWidth: 1,
                     );
                   },
@@ -77,55 +66,41 @@ class _HorizontalBarChartState extends State<HorizontalBarChart> {
                 borderData: FlBorderData(show: false),
                 titlesData: FlTitlesData(
                   show: true,
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      getTitlesWidget: (value, meta) {
-                        return Text(
-                          '${value.toInt()}',
-                          style: TextStyle(
-                            color: Theme.of(context).brightness == Brightness.dark 
-                                ? Colors.white 
-                                : Colors.black,
-                            fontSize: 10,
-                          ),
-                        );
-                      },
-                      reservedSize: 30,
-                    ),
-                  ),
                   leftTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
                       getTitlesWidget: (value, meta) {
                         final index = value.toInt();
-                        // Only show every 2nd label to avoid crowding
-                        if (index % 2 == 0 && index >= 0 && index < widget.categoryCountData.length) {
+                        if (index >= 0 && index < widget.categoryCountData.length) {
                           final category = widget.categoryCountData[index].category ?? '';
                           // Truncate long category names
-                          final truncated = category.length > 8
-                              ? '${category.substring(0, 8)}...'
+                          final truncated = category.length > 15
+                              ? '${category.substring(0, 15)}...'
                               : category;
-                          return Text(
-                            truncated,
-                            style: TextStyle(
-                              color: Theme.of(context).brightness == Brightness.dark 
-                                  ? Colors.white 
-                                  : Colors.black,
-                              fontSize: 10,
+                          return SideTitleWidget(
+                            axisSide: meta.axisSide,
+                            child: Text(
+                              truncated,
+                              style: DashboardTheme.bodySmall,
                             ),
                           );
                         }
                         return const Text('');
                       },
-                      reservedSize: 80,
+                      reservedSize: 100,
                     ),
                   ),
-                  topTitles: AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  rightTitles: AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      getTitlesWidget: (value, meta) {
+                        return Text(
+                          value.toInt().toString(),
+                          style: DashboardTheme.bodySmall,
+                        );
+                      },
+                      reservedSize: 30,
+                    ),
                   ),
                 ),
                 barTouchData: BarTouchData(
@@ -134,7 +109,7 @@ class _HorizontalBarChartState extends State<HorizontalBarChart> {
                     if (event is FlTapUpEvent && barTouchResponse != null) {
                       if (barTouchResponse.spot?.touchedBarGroup != null) {
                         setState(() {
-                          _selectedBarIndex = barTouchResponse.spot!.touchedBarGroup.x;
+                          _selectedBarIndex = barTouchResponse.spot!.touchedBarGroup!.x;
                         });
                       }
                     }
@@ -146,14 +121,14 @@ class _HorizontalBarChartState extends State<HorizontalBarChart> {
                       return BarTooltipItem(
                         '$category\n',
                         const TextStyle(
-                          color: Colors.white,
+                          color: Colors.black,
                           fontWeight: FontWeight.bold,
                         ),
                         children: [
                           TextSpan(
-                            text: '${rod.toY.toInt()}',
+                            text: '${rod.toY.toInt()} productos',
                             style: const TextStyle(
-                              color: Colors.white,
+                              color: Colors.black,
                               fontWeight: FontWeight.normal,
                             ),
                           ),
@@ -162,78 +137,12 @@ class _HorizontalBarChartState extends State<HorizontalBarChart> {
                     },
                   ),
                 ),
+
               ),
             ),
           ),
-          if (_selectedBarIndex != null && 
-              _selectedBarIndex! < widget.categoryCountData.length)
-            Padding(
-              padding: const EdgeInsets.only(top: 12),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  _buildDetailItem(
-                    context, 
-                    'Categoría', 
-                    widget.categoryCountData[_selectedBarIndex!].category ?? ''
-                  ),
-                  _buildDetailItem(
-                    context, 
-                    'Cantidad', 
-                    widget.categoryCountData[_selectedBarIndex!].count.toString()
-                  ),
-                ],
-              ),
-            ),
         ],
       ),
-    );
-  }
-
-  List<BarChartGroupData> _chartGroups() {
-    return widget.categoryCountData.asMap().entries.map((entry) {
-      final index = entry.key;
-      final data = entry.value;
-      
-      return BarChartGroupData(
-        x: index,
-        barRods: [
-          BarChartRodData(
-            toY: data.count.toDouble(),
-            // Use a professional color palette
-            color: _selectedBarIndex == index 
-                ? const Color(0xFF4A90E2) // Selected bar color
-                : const Color(0xFF50C878).withValues(alpha: 0.7), // Default bar color
-            width: 20,
-            borderRadius: BorderRadius.circular(4),
-            rodStackItems: [],
-          ),
-        ],
-      );
-    }).toList();
-  }
-
-  Widget _buildDetailItem(BuildContext context, String label, String value) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: Theme.of(context).brightness == Brightness.dark 
-                ? Colors.white70 
-                : Colors.black54,
-          ),
-        ),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ],
     );
   }
 }

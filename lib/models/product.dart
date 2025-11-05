@@ -28,23 +28,34 @@ class Product {
   });
 
   factory Product.fromJson(Map<String, dynamic> json) {
-    return Product(
-      id: json['id']?.toString() ?? '', // Handle null ID
-      name:
-          json['name']?.toString() ?? 'Producto sin nombre', // Handle null name
-      productNumber:
-          json['productNumber']?.toString() ?? '', // Handle null product number
-      color: json['color']?.toString(), // Allow null color
-      listPrice:
-          (json['listPrice'] as num?)?.toDouble() ?? 0.0, // Handle null price
-      category: json['category']?.toString(), // Allow null category
-      description: json['description']?.toString(), // Allow null description
-      brand: json['brand']?.toString(), // Allow null brand
-      status: json['status']?.toString(), // Allow null status
-      warranty: json['warranty']?.toString(), // Allow null warranty
-      shipping: json['shipping']?.toString(), // Allow null shipping
-      stock: json['stock'] as bool?, // Allow null stock
-    );
+    try {
+      return Product(
+        id: json['id']?.toString() ?? '', // Handle null ID
+        name:
+            json['name']?.toString() ?? 'Producto sin nombre', // Handle null name
+        productNumber:
+            json['productNumber']?.toString() ?? '', // Handle null product number
+        color: json['color']?.toString(), // Allow null color
+        listPrice:
+            (json['listPrice'] as num?)?.toDouble() ?? 0.0, // Handle null price
+        category: json['category']?.toString(), // Allow null category
+        description: json['description']?.toString(), // Allow null description
+        brand: json['brand']?.toString(), // Allow null brand
+        status: json['status']?.toString(), // Allow null status
+        warranty: json['warranty']?.toString(), // Allow null warranty
+        shipping: json['shipping']?.toString(), // Allow null shipping
+        stock: json['stock'] as bool?, // Allow null stock
+      );
+    } catch (e) {
+      // Return a default product if JSON parsing fails
+      print('Error parsing product JSON: $e');
+      return Product(
+        id: '',
+        name: 'Producto sin nombre',
+        productNumber: '',
+        listPrice: 0.0,
+      );
+    }
   }
 
   Map<String, dynamic> toJson() {

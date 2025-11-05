@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../models/product.dart';
 import '../../services/product_service.dart';
 import '../../services/product_service_firebase.dart';
+import '../../services/product_service_static.dart';
 import '../../services/auth_service.dart';
 import '../../services/theme_service.dart';
 import '../auth/login_page.dart';
@@ -9,7 +10,9 @@ import 'pages/create_product_page.dart';
 
 class ProductsPage extends StatefulWidget {
   static const route = '/products';
-  const ProductsPage({super.key});
+  final bool useFirebase;
+  
+  const ProductsPage({super.key, required this.useFirebase});
 
   @override
   State<ProductsPage> createState() => _ProductsPageState();
@@ -27,8 +30,8 @@ class _ProductsPageState extends State<ProductsPage> {
   String _searchQuery = '';
   String _selectedCategory = 'Todos';
   bool _isGridView = false;
-  // Force Firebase usage since it's properly configured
-  bool _useFirebase = true;
+  // Use the passed parameter to determine which service to use
+  late bool _useFirebase;
 
   final List<String> _categories = [
     'Todos',
@@ -43,6 +46,8 @@ class _ProductsPageState extends State<ProductsPage> {
   @override
   void initState() {
     super.initState();
+    // Set the service based on the parameter
+    _useFirebase = widget.useFirebase;
     // Try to load products from Firebase, fallback to static if Firebase fails
     _loadProducts();
   }
@@ -311,7 +316,7 @@ class _ProductsPageState extends State<ProductsPage> {
               ),
             ),
             Text(
-              'Catálogo de Productos (Firebase)',
+              _useFirebase ? 'Catálogo de Productos (Firebase)' : 'Catálogo de Productos (Estático)',
               style: theme.textTheme.bodySmall?.copyWith(
                 color: colorScheme.onSurface.withOpacity(0.7),
               ),
@@ -330,8 +335,8 @@ class _ProductsPageState extends State<ProductsPage> {
           // Add Product Button
           IconButton(
             icon: const Icon(Icons.add),
-            onPressed: _navigateToCreateProduct,
-            tooltip: 'Agregar producto',
+            onPressed: _useFirebase ? _navigateToCreateProduct : null,
+            tooltip: _useFirebase ? 'Agregar producto' : 'No disponible en modo estático',
           ),
           IconButton(
             icon: Icon(_isGridView ? Icons.view_list : Icons.grid_view),
@@ -479,100 +484,187 @@ class _ProductsPageState extends State<ProductsPage> {
             ),
           ),
 
-          // Products List - Always use Firebase now
+          // Products List - Use appropriate service based on _useFirebase flag
           Expanded(
-            child: StreamBuilder<List<Product>>(
-              stream: _firebaseService.getProductsStream(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        CircularProgressIndicator(color: colorScheme.primary),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Cargando productos...',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: colorScheme.onSurface.withOpacity(0.7),
-                          ),
+            child: _useFirebase 
+              ? StreamBuilder<List<Product>>(
+                  stream: _firebaseService.getProductsStream(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            CircularProgressIndicator(color: colorScheme.primary),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Cargando productos...',
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: colorScheme.onSurface.withOpacity(0.7),
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                  );
-                }
+                      );
+                    }
 
-                if (snapshot.hasError) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.error_outline,
-                          size: 64,
-                          color: colorScheme.error,
+                    if (snapshot.hasError) {
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.error_outline,
+                              size: 64,
+                              color: colorScheme.error,
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Error al cargar productos',
+                              style: theme.textTheme.headlineSmall?.copyWith(
+                                color: colorScheme.error,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              '${snapshot.error}',
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: colorScheme.onSurface.withOpacity(0.7),
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 24),
+                            ElevatedButton.icon(
+                              onPressed: _refresh,
+                              icon: const Icon(Icons.refresh),
+                              label: const Text('Reintentar'),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Error al cargar productos',
-                          style: theme.textTheme.headlineSmall?.copyWith(
-                            color: colorScheme.error,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          '${snapshot.error}',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: colorScheme.onSurface.withOpacity(0.7),
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 24),
-                        ElevatedButton.icon(
-                          onPressed: _refresh,
-                          icon: const Icon(Icons.refresh),
-                          label: const Text('Reintentar'),
-                        ),
-                      ],
-                    ),
-                  );
-                }
+                      );
+                    }
 
-                if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.inventory_2_outlined,
-                          size: 64,
-                          color: colorScheme.onSurface.withOpacity(0.5),
+                    if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.inventory_2_outlined,
+                              size: 64,
+                              color: colorScheme.onSurface.withOpacity(0.5),
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'No hay productos disponibles',
+                              style: theme.textTheme.headlineSmall?.copyWith(
+                                color: colorScheme.onSurface.withOpacity(0.7),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            OutlinedButton.icon(
+                              onPressed: _navigateToCreateProduct,
+                              icon: const Icon(Icons.add),
+                              label: const Text('Agregar tu primer producto'),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'No hay productos disponibles',
-                          style: theme.textTheme.headlineSmall?.copyWith(
-                            color: colorScheme.onSurface.withOpacity(0.7),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        OutlinedButton.icon(
-                          onPressed: _navigateToCreateProduct,
-                          icon: const Icon(Icons.add),
-                          label: const Text('Agregar tu primer producto'),
-                        ),
-                      ],
-                    ),
-                  );
-                }
+                      );
+                    }
 
-                // Update all products list
-                _allProducts = snapshot.data!;
-                _filteredProducts = _filterProductsList(_allProducts);
+                    // Update all products list
+                    _allProducts = snapshot.data!;
+                    _filteredProducts = _filterProductsList(_allProducts);
 
-                return _isGridView ? _buildGridView() : _buildListView();
-              },
-            ),
+                    return _isGridView ? _buildGridView() : _buildListView();
+                  },
+                )
+              : FutureBuilder<List<Product>>(
+                  future: _staticService.fetchProducts(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            CircularProgressIndicator(color: colorScheme.primary),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Cargando productos...',
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: colorScheme.onSurface.withOpacity(0.7),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+
+                    if (snapshot.hasError) {
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.error_outline,
+                              size: 64,
+                              color: colorScheme.error,
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Error al cargar productos',
+                              style: theme.textTheme.headlineSmall?.copyWith(
+                                color: colorScheme.error,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              '${snapshot.error}',
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: colorScheme.onSurface.withOpacity(0.7),
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 24),
+                            ElevatedButton.icon(
+                              onPressed: _refresh,
+                              icon: const Icon(Icons.refresh),
+                              label: const Text('Reintentar'),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+
+                    if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.inventory_2_outlined,
+                              size: 64,
+                              color: colorScheme.onSurface.withOpacity(0.5),
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'No hay productos disponibles',
+                              style: theme.textTheme.headlineSmall?.copyWith(
+                                color: colorScheme.onSurface.withOpacity(0.7),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+
+                    // Update all products list
+                    _allProducts = snapshot.data!;
+                    _filteredProducts = _filterProductsList(_allProducts);
+
+                    return _isGridView ? _buildGridView() : _buildListView();
+                  },
+                ),
           ),
         ],
       ),

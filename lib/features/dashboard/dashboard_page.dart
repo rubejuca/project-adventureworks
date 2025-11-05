@@ -4,7 +4,9 @@ import 'widgets/header_widget.dart';
 import 'dashboard_controller.dart';
 
 class DashboardPage extends StatefulWidget {
-  const DashboardPage({super.key});
+  final bool useFirebase;
+  
+  const DashboardPage({super.key, this.useFirebase = true});
 
   @override
   State<DashboardPage> createState() => _DashboardPageState();
@@ -16,7 +18,7 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   void initState() {
     super.initState();
-    _controller = DashboardController();
+    _controller = DashboardController(useFirebase: widget.useFirebase);
     _controller.loadDashboardData();
   }
 
@@ -75,7 +77,11 @@ class _DashboardPageState extends State<DashboardPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const HeaderWidget(title: 'Dashboard'),
+                  HeaderWidget(
+                    title: widget.useFirebase 
+                      ? 'Dashboard (Firebase)' 
+                      : 'Dashboard (Estático)'
+                  ),
                   const SizedBox(height: 20),
                   DashboardWidget(data: data),
                 ],

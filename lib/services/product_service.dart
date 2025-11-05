@@ -1,9 +1,68 @@
 import 'dart:async';
 import '../models/product.dart';
+import 'product_service_interface.dart';
 
-class ProductService {
+class ProductService implements ProductServiceInterface {
+  @override
   Future<List<Product>> fetchProducts() async {
     await Future.delayed(const Duration(milliseconds: 800));
+    return _getInitialProducts();
+  }
+
+  @override
+  Future<List<Product>> getProducts() async {
+    return fetchProducts();
+  }
+
+  @override
+  Stream<List<Product>> getProductsStream() {
+    return Stream.value(_getInitialProducts());
+  }
+
+  @override
+  Future<void> addProduct(Product product) async {
+    // Static service doesn't support adding products
+    throw UnimplementedError('Static service does not support adding products');
+  }
+
+  @override
+  Future<void> updateProduct(Product product) async {
+    // Static service doesn't support updating products
+    throw UnimplementedError('Static service does not support updating products');
+  }
+
+  @override
+  Future<void> deleteProduct(String productId) async {
+    // Static service doesn't support deleting products
+    throw UnimplementedError('Static service does not support deleting products');
+  }
+
+  @override
+  Future<Product?> getProductById(String id) async {
+    try {
+      final products = _getInitialProducts();
+      return products.firstWhere(
+        (product) => product.id == id,
+        orElse: () => Product(
+          id: '',
+          name: 'Producto no encontrado',
+          productNumber: '',
+          listPrice: 0.0,
+        ),
+      );
+    } catch (e) {
+      // Return null if there's an error
+      print('Error getting product by ID: $e');
+      return null;
+    }
+  }
+
+  @override
+  Future<void> seedInitialProducts() async {
+    // Not needed for static service
+  }
+
+  List<Product> _getInitialProducts() {
     return [
       // Bike Frames
       Product.fromStaticData(
@@ -99,7 +158,7 @@ class ProductService {
       Product.fromStaticData(
         id: 728,
         name: 'Bike Wash - Dissolver',
-        productNumber: 'CL-9009',
+        productNumber: 'CL-909',
         listPrice: 7.95,
         color: null,
       ),

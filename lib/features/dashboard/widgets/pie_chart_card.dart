@@ -1,6 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import '../dashboard_controller.dart';
+import 'dashboard_theme.dart';
 
 class PieChartCard extends StatefulWidget {
   final List<CategoryPriceData> categoryPriceData;
@@ -12,142 +13,169 @@ class PieChartCard extends StatefulWidget {
 }
 
 class _PieChartCardState extends State<PieChartCard> {
-  int? _selectedSectionIndex;
+  int _touchedIndex = -1;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Theme.of(context).cardTheme.color ?? Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Theme.of(context).brightness == Brightness.dark 
-                ? Colors.black.withValues(alpha: 0.3) 
-                : Colors.grey.withValues(alpha: 0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        color: DashboardTheme.cardBackgroundColor,
+        borderRadius: DashboardTheme.cardBorderRadius,
+        boxShadow: DashboardTheme.cardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            "Distribución de precios por categoría",
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
+          Text(
+            "Distribución de Precios por Categoría",
+            style: DashboardTheme.headingSmall,
           ),
           const SizedBox(height: 12),
           SizedBox(
-            height: 200,
-            child: PieChart(
-              PieChartData(
-                sections: _showingSections(),
-                centerSpaceRadius: 40,
-                sectionsSpace: 2,
-                pieTouchData: PieTouchData(
-                  touchCallback: (FlTouchEvent event, pieTouchResponse) {
-                    if (event is FlTapUpEvent && pieTouchResponse != null) {
-                      setState(() {
-                        _selectedSectionIndex = pieTouchResponse.touchedSection?.touchedSectionIndex;
-                      });
-                    }
-                  },
+            height: 300,
+            child: Row(
+              children: [
+                Expanded(
+                  flex: 3,
+                  child: PieChart(
+                    PieChartData(
+                      pieTouchData: PieTouchData(
+                        touchCallback: (FlTouchEvent event, pieTouchResponse) {
+                          setState(() {
+                            if (!event.isInterestedForInteractions ||
+                                pieTouchResponse == null ||
+                                pieTouchResponse.touchedSection == null) {
+                              _touchedIndex = -1;
+                              return;
+                            }
+                            _touchedIndex = pieTouchResponse.touchedSection!.touchedSectionIndex;
+                          });
+                        },
+                      ),
+                      sectionsSpace: 0,
+                      centerSpaceRadius: 50,
+                      sections: _getSections(),
+                    ),
+                  ),
                 ),
-              ),
+                Expanded(
+                  flex: 2,
+                  child: _buildLegend(),
+                ),
+              ],
             ),
           ),
-          if (_selectedSectionIndex != null && 
-              _selectedSectionIndex! < widget.categoryPriceData.length)
-            Padding(
-              padding: const EdgeInsets.only(top: 12),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  _buildDetailItem(
-                    context, 
-                    'Categoría', 
-                    widget.categoryPriceData[_selectedSectionIndex!].category ?? ''
-                  ),
-                  _buildDetailItem(
-                    context, 
-                    'Precio Promedio', 
-                    '\$${widget.categoryPriceData[_selectedSectionIndex!].averagePrice.toStringAsFixed(2)}'
-                  ),
-                ],
-              ),
-            ),
         ],
       ),
     );
   }
 
-  List<PieChartSectionData> _showingSections() {
-    // Create sections based on category price data
-    final sections = <PieChartSectionData>[];
-    // Professional color palette
-    final colors = [
-      const Color(0xFF4A90E2), // Blue
-      const Color(0xFF50C878), // Emerald Green
-      const Color(0xFFFF6B6B), // Coral Red
-      const Color(0xFFFFD93D), // Golden Yellow
-      const Color(0xFF6A5ACD), // Slate Blue
-      const Color(0xFF20B2AA), // Light Sea Green
-    ];
+  List<PieChartSectionData> _getSections() {
+    final total = widget.categoryPriceData.fold<double>(
+      0, 
+      (sum, item) => sum + item.averagePrice
+    );
     
-    for (int i = 0; i < widget.categoryPriceData.length && i < 6; i++) {
-      final data = widget.categoryPriceData[i];
-      sections.add(
-        PieChartSectionData(
-          color: _selectedSectionIndex == i 
-              ? colors[i].withValues(alpha: 1.0) 
-              : colors[i].withValues(alpha: 0.7),
+    return List.generate(
+      widget.categoryPriceData.length,
+      (i) {
+        final data = widget.categoryPriceData[i];
+        final percentage = total > 0 ? (data.averagePrice / total) * 100 : 0;
+        final isTouched = i == _touchedIndex;
+        final fontSize = isTouched ? 14.0 : 12.0;
+        final radius = isTouched ? 55.0 : 50.0;
+        
+        // Generate colors based on index
+        final colors = [
+          DashboardTheme.primaryBlue,
+          DashboardTheme.primaryGreen,
+          DashboardTheme.accentOrange,
+          Colors.purple,
+          Colors.teal,
+          Colors.pink,
+          Colors.indigo,
+          Colors.cyan,
+          Colors.lime,
+          Colors.amber,
+        ];
+        
+        final color = colors[i % colors.length];
+        
+        return PieChartSectionData(
+          color: color,
           value: data.averagePrice,
-          title: data.averagePrice.toStringAsFixed(0),
-          radius: _selectedSectionIndex == i ? 60 : 50,
-          titleStyle: const TextStyle(
-            fontSize: 12,
+          title: '${percentage.toStringAsFixed(1)}%',
+          radius: radius,
+          titleStyle: TextStyle(
+            fontSize: fontSize,
             fontWeight: FontWeight.bold,
             color: Colors.white,
           ),
-          borderSide: BorderSide(
-            color: _selectedSectionIndex == i 
-                ? Colors.white 
-                : Colors.transparent,
-            width: _selectedSectionIndex == i ? 2 : 0,
-          ),
-        ),
-      );
-    }
-    
-    return sections;
+        );
+      },
+    );
   }
 
-  Widget _buildDetailItem(BuildContext context, String label, String value) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: Theme.of(context).brightness == Brightness.dark 
-                ? Colors.white70 
-                : Colors.black54,
-          ),
+  Widget _buildLegend() {
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: List.generate(
+          widget.categoryPriceData.length,
+          (i) {
+            final data = widget.categoryPriceData[i];
+            final isTouched = i == _touchedIndex;
+            
+            // Generate colors based on index
+            final colors = [
+              DashboardTheme.primaryBlue,
+              DashboardTheme.primaryGreen,
+              DashboardTheme.accentOrange,
+              Colors.purple,
+              Colors.teal,
+              Colors.pink,
+              Colors.indigo,
+              Colors.cyan,
+              Colors.lime,
+              Colors.amber,
+            ];
+            
+            final color = colors[i % colors.length];
+            
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4.0),
+              child: Row(
+                children: [
+                  Container(
+                    width: 12,
+                    height: 12,
+                    decoration: BoxDecoration(
+                      color: color,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      data.category ?? '',
+                      style: DashboardTheme.bodyMedium.copyWith(
+                        fontWeight: isTouched ? FontWeight.bold : FontWeight.normal,
+                      ),
+                    ),
+                  ),
+                  Text(
+                    '\$${data.averagePrice.toStringAsFixed(2)}',
+                    style: DashboardTheme.bodyMedium.copyWith(
+                      fontWeight: isTouched ? FontWeight.bold : FontWeight.normal,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
         ),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ],
+      ),
     );
   }
 }

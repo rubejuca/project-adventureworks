@@ -4,9 +4,13 @@ import 'package:adventure_works/features/products/products_page.dart';
 import 'package:adventure_works/features/products/pages/create_product_page.dart'; // Add this import
 import 'package:adventure_works/features/dashboard/dashboard_page.dart'; // Add this import
 import 'package:adventure_works/services/theme_service.dart';
+import 'package:adventure_works/services/product_service_firebase.dart';
+import 'package:adventure_works/services/product_service_static.dart';
 
 class MyApp extends StatefulWidget {
-  const MyApp({super.key});
+  final bool useFirebase;
+  
+  const MyApp({super.key, required this.useFirebase});
 
   @override
   State<MyApp> createState() => _MyAppState();
@@ -42,10 +46,10 @@ class _MyAppState extends State<MyApp> {
       initialRoute: LoginPage.route,
       routes: {
         LoginPage.route: (context) => const LoginPage(),
-        ProductsPage.route: (context) => const ProductsPage(),
+        ProductsPage.route: (context) => ProductsPage(useFirebase: widget.useFirebase),
         CreateProductPage.route:
             (context) => const CreateProductPage(), // Add this route
-        '/dashboard': (context) => const DashboardPage(),
+        '/dashboard': (context) => DashboardPage(useFirebase: widget.useFirebase),
       },
     );
   }
